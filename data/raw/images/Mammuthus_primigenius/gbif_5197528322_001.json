@@ -1,0 +1,13 @@
+{
+  "filename": "gbif_5197528322_001.jpg",
+  "species": "Mammuthus primigenius (Blumenbach, 1799)",
+  "source": "gbif",
+  "record_id": "gbif_5197528322",
+  "original_url": "https://observation.org/photos/111298249.jpg",
+  "location": {
+    "country": "NL",
+    "lat": 52.05,
+    "lng": 4.15
+  },
+  "download_date": "2025-09-01 21:08:55"
+}
