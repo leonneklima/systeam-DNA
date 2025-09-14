@@ -1,7 +1,9 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import shutil
-import uuid
+import tempfile
 import os
+from datetime import datetime
 from app.predictor import predict_species
 
 app = FastAPI(
@@ -10,23 +12,32 @@ app = FastAPI(
     version="1.0.0"
 )
 
-UPLOAD_DIR = "tmp_uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/analyze")
 async def analyze_fossil(file: UploadFile = File(...)):
-    file_id = str(uuid.uuid4())
-    file_path = os.path.join(UPLOAD_DIR, f"{file_id}.jpg")
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Arquivo inválido. Envie apenas imagens.")
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
+        shutil.copyfileobj(file.file, tmp)
+        tmp_path = tmp.name
 
-    result = predict_species(file_path)
-
-    os.remove(file_path)
+    try:
+        result = predict_species(tmp_path)
+    finally:
+        os.remove(tmp_path)
 
     return {
         "status": "sucesso",
+        "arquivo": file.filename,
+        "analisado_em": datetime.utcnow().isoformat(),
         "resultado": result
     }
 
